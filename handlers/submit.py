@@ -89,15 +89,23 @@ async def got_price_type(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         kb = InlineKeyboardMarkup([[
             InlineKeyboardButton("תיאום מחיר בפרטי", callback_data=PRICE_PRIVATE_CB)
         ]])
-        await query.edit_message_text(
+        msg = await query.edit_message_text(
             "כמה עולה? (לדוגמה: 9₪/חודש, 49₪ חד פעמי):",
             reply_markup=kb,
         )
+        ctx.user_data["_price_kb_msg"] = (msg.chat_id, msg.message_id)
         return PRICE_AMOUNT
 
 
 async def got_price_amount(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     ctx.user_data["price"] = update.message.text.strip()
+    # Remove the stale inline keyboard from the price prompt
+    prev = ctx.user_data.pop("_price_kb_msg", None)
+    if prev:
+        try:
+            await ctx.bot.edit_message_reply_markup(chat_id=prev[0], message_id=prev[1], reply_markup=None)
+        except Exception:
+            pass
     await update.message.reply_text("תמונה או GIF של הכלי (אופציונלי):", reply_markup=_skip_kb())
     return IMAGE
 
