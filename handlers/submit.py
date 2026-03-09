@@ -8,6 +8,7 @@ from telegram.ext import (
     filters,
 )
 from datetime import datetime, timezone
+from config import ADMIN_IDS
 from models.db import get_user, upsert_user, save_submission
 from utils.cooldown import get_remaining, format_remaining
 
@@ -28,7 +29,7 @@ async def start_submit(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     db_user = await get_user(user.id)
     remaining = get_remaining(db_user.get("last_published_at") if db_user else None)
 
-    if remaining:
+    if remaining and user.id not in ADMIN_IDS:
         await update.message.reply_text(
             f"⏳ עדיין לא עברו {5} ימים מהפרסום האחרון שלך.\n"
             f"נותרו: *{format_remaining(remaining)}*\n\n"
