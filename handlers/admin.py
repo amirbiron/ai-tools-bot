@@ -141,7 +141,7 @@ async def _publish_to_channel(ctx: ContextTypes.DEFAULT_TYPE, submission: dict) 
         f"🛠 *{submission['tool_name']}*\n\n"
         f"{submission['description']}\n\n"
         f"💵 מחיר: {price_str}\n"
-        f"🔗 [לינק לכלי]({submission['link']})\n\n"
+        f"🔗 [לינק לכלי / לדף נחיתה]({submission['link']})\n\n"
         f"_הוגש על ידי {username_str}_"
     )
 

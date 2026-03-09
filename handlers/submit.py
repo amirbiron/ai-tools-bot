@@ -20,6 +20,7 @@ CONFIRM_YES_CB = "confirm_yes"
 CONFIRM_NO_CB = "confirm_no"
 PRICE_FREE_CB = "price_free"
 PRICE_PAID_CB = "price_paid"
+PRICE_PRIVATE_CB = "price_private"
 
 
 async def start_submit(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -48,13 +49,13 @@ async def start_submit(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 async def got_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     ctx.user_data["name"] = update.message.text.strip()
-    await update.message.reply_text("תיאור קצר של הכלי — במשפט או שניים:")
+    await update.message.reply_text("תיאור של הכלי:")
     return DESCRIPTION
 
 
 async def got_description(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     ctx.user_data["description"] = update.message.text.strip()
-    await update.message.reply_text("לינק לכלי:")
+    await update.message.reply_text("לינק לכלי / לדף נחיתה:")
     return LINK
 
 
@@ -85,13 +86,27 @@ async def got_price_type(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("תמונה או GIF של הכלי (אופציונלי):", reply_markup=_skip_kb())
         return IMAGE
     else:
-        await query.edit_message_text("כמה עולה? (לדוגמה: $9/חודש, $49 חד-פעמי):")
+        kb = InlineKeyboardMarkup([[
+            InlineKeyboardButton("תיאום מחיר בפרטי", callback_data=PRICE_PRIVATE_CB)
+        ]])
+        await query.edit_message_text(
+            "כמה עולה? (לדוגמה: 9₪/חודש, 49₪ חד פעמי):",
+            reply_markup=kb,
+        )
         return PRICE_AMOUNT
 
 
 async def got_price_amount(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     ctx.user_data["price"] = update.message.text.strip()
     await update.message.reply_text("תמונה או GIF של הכלי (אופציונלי):", reply_markup=_skip_kb())
+    return IMAGE
+
+
+async def got_price_private(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    ctx.user_data["price"] = "תיאום מחיר בפרטי"
+    await query.edit_message_text("תמונה או GIF של הכלי (אופציונלי):", reply_markup=_skip_kb())
     return IMAGE
 
 
@@ -248,7 +263,10 @@ def build_submit_handler() -> ConversationHandler:
             DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, got_description)],
             LINK: [MessageHandler(filters.TEXT & ~filters.COMMAND, got_link)],
             PRICE: [CallbackQueryHandler(got_price_type, pattern=f"^({PRICE_FREE_CB}|{PRICE_PAID_CB})$")],
-            PRICE_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, got_price_amount)],
+            PRICE_AMOUNT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, got_price_amount),
+                CallbackQueryHandler(got_price_private, pattern=f"^{PRICE_PRIVATE_CB}$"),
+            ],
             IMAGE: [
                 MessageHandler(filters.PHOTO | filters.ANIMATION | filters.Document.IMAGE, got_image),
                 CallbackQueryHandler(skip_image, pattern=f"^{SKIP_IMAGE_CB}$"),
