@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from telegram.ext import Application, CallbackQueryHandler
 
@@ -29,4 +30,10 @@ def main():
 
 
 if __name__ == "__main__":
+    # Python 3.14 no longer implicitly creates an event loop in get_event_loop()
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
     main()
