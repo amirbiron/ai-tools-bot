@@ -238,8 +238,9 @@ def _skip_kb():
 def build_submit_handler() -> ConversationHandler:
     return ConversationHandler(
         entry_points=[
-            CommandHandler("הגש", start_submit),
+            MessageHandler(filters.Regex(r"^/הגש"), start_submit),
             CommandHandler("start", start_submit),
+            CommandHandler("submit", start_submit),
         ],
         states={
             NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, got_name)],
